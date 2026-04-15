@@ -1,0 +1,50 @@
+window-rule {
+    match app-id="^polkit-gnome-authentication-agent"
+    open-floating true
+}
+window-rule {
+    match app-id="^org\\.kde\\.polkit-kde-authentication-agent"
+    open-floating true
+}
+window-rule {
+    match app-id="^pinentry"
+    open-floating true
+}
+window-rule {
+    match app-id="^nm-connection-editor$"
+    open-floating true
+}
+window-rule {
+    match app-id="^pavucontrol$"
+    open-floating true
+}
+window-rule {
+    match app-id="^org\\.pulseaudio\\.pavucontrol$"
+    open-floating true
+}
+window-rule {
+    match app-id="^blueman-"
+    open-floating true
+}
+
+window-rule {
+    open-floating true
+    default-column-width { fixed 420; }
+    default-window-height { fixed 800; }
+    match app-id="^taskcli-sidebar$"
+}
+
+window-rule {
+    open-floating  true
+    open-focused   false
+    focus-ring { off; }
+    default-floating-position x=10 y=50 relative-to="top-right"
+    match app-id="^steam$" title="^notificationtoasts_\\d+_desktop$"
+}
+
+window-rule {
+    geometry-corner-radius 16
+    clip-to-geometry true
+    opacity 1.0
+    match {}
+}

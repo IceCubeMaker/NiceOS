@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "taskcli"
+version = "0.1.0"
+dependencies = [
+    "click",
+    "textual",
+    "lupa",
+    "watchdog",
+    "pyyaml",
+    "python-dateutil",
+    "pyperclip", 
+]
+
+[project.scripts]
+taskcli = "taskcli.__main__:cli"
+
+[tool.setuptools.packages.find]
+where = ["src"]

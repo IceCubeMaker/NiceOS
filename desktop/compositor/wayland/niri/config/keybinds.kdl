@@ -1,0 +1,43 @@
+binds {
+    Mod+S       { screenshot; }
+    Mod+Shift+P { screenshot-screen; }
+
+    Mod+Shift+S hotkey-overlay-title="Sidebar: toggle window"  { spawn-sh "${niri-sidebar}/bin/niri-sidebar toggle-window"; }
+    Mod+Alt+S   hotkey-overlay-title="Sidebar: hide/show"      { spawn-sh "${niri-sidebar}/bin/niri-sidebar toggle-visibility"; }
+
+    Mod+grave       hotkey-overlay-title="Scratchpad: terminal"   { spawn-sh "${ndrop}/bin/ndrop -c kitty_scratch  ${pkgs.kitty}/bin/kitty --class kitty_scratch"; }
+    Mod+Shift+grave hotkey-overlay-title="Scratchpad: terminal 2" { spawn-sh "${ndrop}/bin/ndrop -c kitty_scratch2 ${pkgs.kitty}/bin/kitty --class kitty_scratch2"; }
+
+    Mod+T hotkey-overlay-title="Open a Terminal"    { spawn-sh "kitty --hold fastfetch"; }
+    Mod+R hotkey-overlay-title="Run an Application" { spawn "fuzzel"; }
+    Alt+Mod+Alt+R hotkey-overlay-title="Reboot"     { spawn-sh "reboot"; }
+    Alt+Mod+Alt+K hotkey-overlay-title="Shutdown"   { spawn-sh "shutdown now"; }
+
+    Mod+O hotkey-overlay-title="Overview"        { toggle-overview; }
+    Mod+F hotkey-overlay-title="Maximize window" { maximize-column; }
+    Mod+Q repeat=false { close-window; }
+    F4    { fullscreen-window; }
+
+    Mod+J { focus-column-left; }
+    Mod+L { focus-column-right; }
+    Mod+I { focus-workspace-up; }
+    Mod+K { focus-workspace-down; }
+
+    Mod+Ctrl+J { move-column-left; }
+    Mod+Ctrl+L { move-column-right; }
+    Mod+Ctrl+I { move-window-to-workspace-up; }
+    Mod+Ctrl+K { move-window-to-workspace-down; }
+
+    Mod+W { spawn-sh "wp-change"; }
+
+    XF86AudioRaiseVolume  allow-when-locked=true { spawn-sh "swayosd-client --output-volume raise"; }
+    XF86AudioLowerVolume  allow-when-locked=true { spawn-sh "swayosd-client --output-volume lower"; }
+    XF86AudioMute         allow-when-locked=true { spawn-sh "swayosd-client --output-volume mute-toggle"; }
+    XF86MonBrightnessUp   allow-when-locked=true { spawn-sh "swayosd-client --brightness raise"; }
+    XF86MonBrightnessDown allow-when-locked=true { spawn-sh "swayosd-client --brightness lower"; }
+    XF86Sleep   { spawn-sh "systemctl suspend"; }
+    XF86WLAN    { spawn-sh "rfkill toggle wifi"; }
+    XF86TouchpadToggle { spawn-sh "touchpad-toggle"; }
+    XF86Battery { spawn-sh "${pkgs.libnotify}/bin/notify-send 'Battery' \"$(acpi)\""; }
+    XF86LaunchA { spawn "fuzzel"; }
+}
