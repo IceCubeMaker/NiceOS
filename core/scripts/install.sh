@@ -158,7 +158,7 @@ fi
 echo ""
 echo -e "${CYAN}🚀 Starting NiceOS rebuild...${RESET}"
 echo ""
-nix --experimental-features 'nix-command flakes' run nixpkgs#nh -- os switch "$REPO_ROOT"
+nix --extra-experimental-features 'nix-command flakes' run nixpkgs#nh -- os switch "$REPO_ROOT" -- --impure
 
 echo ""
 echo -e "${BOLD}${GREEN}✓ NiceOS installed successfully!${RESET}"
