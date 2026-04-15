@@ -21,21 +21,21 @@ spinner() {
     local logfile=$3
     local frames=("⠋" "⠙" "⠹" "⠸" "⠼" "⠴" "⠦" "⠧" "⠇" "⠏")
     local i=0
-    printf "\033[?25l"  # hide cursor
+    printf "\033[?25l"
     while kill -0 "$pid" 2>/dev/null; do
         local last=""
         if [ -n "$logfile" ] && [ -f "$logfile" ]; then
             last=$(tail -1 "$logfile" 2>/dev/null | sed 's/[^[:print:]]//g' | cut -c1-80)
         fi
-        printf "\033[s"                                    # save cursor
+        printf "\033[s"
         printf "${CYAN}${frames[$i]}${RESET} ${msg}\033[K"
         printf "\n${DIM}  ${last}\033[K${RESET}"
-        printf "\033[u"                                    # restore cursor
+        printf "\033[u"
         i=$(( (i+1) % ${#frames[@]} ))
         sleep 0.1
     done
     printf "\033[K\n\033[K"
-    printf "\033[?25h"  # show cursor
+    printf "\033[?25h"
 }
 
 echo -e "${BOLD}${CYAN}"
@@ -79,6 +79,9 @@ else
 fi
 rm -f "$LOG"
 
+# Mark repo as safe for current user
+sudo git config --global --add safe.directory "$REPO_ROOT"
+
 # Symlink /etc/nixos to repo root
 LOG=$(mktemp)
 (sudo ln -sfn "$REPO_ROOT" /etc/nixos > "$LOG" 2>&1) &
@@ -88,7 +91,7 @@ echo -e "${GREEN}✓${RESET} /etc/nixos linked to $REPO_ROOT"
 
 # Generate hardware-configuration.nix
 LOG=$(mktemp)
-(sudo nixos-generate-config --show-hardware-config > "$REPO_ROOT/hardware-configuration.nix" 2>"$LOG") &
+(sudo nixos-generate-config --show-hardware-config | sudo tee "$REPO_ROOT/hardware-configuration.nix" > /dev/null 2>"$LOG") &
 spinner $! "Generating hardware configuration..." "$LOG"
 rm -f "$LOG"
 echo -e "${GREEN}✓${RESET} hardware-configuration.nix generated"
