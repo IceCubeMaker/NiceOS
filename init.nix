@@ -2,7 +2,6 @@
 
 {
   imports = [
-    ./hardware-configuration.nix
     ./software/gaming/emulation/game-emulation.nix
     ./software/programming/chillcube.nix
     ./core/linux_basics.nix
