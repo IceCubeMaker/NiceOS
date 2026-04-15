@@ -122,7 +122,7 @@ fi
 
 # Lock down permissions on passwords.nix
 LOG=$(mktemp)
-(sudo chmod 600 "$USER_PASSWORDS" && sudo chown root:root "$USER_PASSWORDS" > "$LOG" 2>&1) &
+(sudo chmod 640 "$USER_PASSWORDS" && sudo chown root:nixbld "$USER_PASSWORDS" > "$LOG" 2>&1) &
 spinner $! "Securing passwords.nix..." "$LOG"
 rm -f "$LOG"
 echo -e "${GREEN}✓${RESET} passwords.nix permissions secured"

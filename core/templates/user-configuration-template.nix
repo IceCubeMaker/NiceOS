@@ -1,6 +1,6 @@
 { lib, config, pkgs, ... }:
 {
-  global {
+  global = {
     user     = "yourname";
     timeZone = "Europe/Oslo";
   };
