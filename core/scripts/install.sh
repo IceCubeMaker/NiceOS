@@ -15,6 +15,13 @@ RED="\033[31m"
 DIM="\033[2m"
 RESET="\033[0m"
 
+# Check for NixOS
+if [ ! -f /etc/NIXOS ]; then
+    echo -e "${RED}✗${RESET} NiceOS requires NixOS. This system does not appear to be running NixOS."
+    echo -e "${DIM}  Visit https://nixos.org to get started with NixOS.${RESET}"
+    exit 1
+fi
+
 random_tip() {
     if [ -f /run/current-system/sw/share/niceos/tips.sh ]; then
         source /run/current-system/sw/share/niceos/tips.sh
