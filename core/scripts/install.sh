@@ -27,14 +27,12 @@ spinner() {
         if [ -n "$logfile" ] && [ -f "$logfile" ]; then
             last=$(tail -1 "$logfile" 2>/dev/null | sed 's/[^[:print:]]//g' | cut -c1-80)
         fi
-        printf "\033[s"
-        printf "${CYAN}${frames[$i]}${RESET} ${msg}\033[K"
-        printf "\n${DIM}  ${last}\033[K${RESET}"
-        printf "\033[u"
+        printf "\r${CYAN}${frames[$i]}${RESET} ${msg}\033[K"
+        printf "\n${DIM}  %-80s${RESET}\r\033[1A" "$last"
         i=$(( (i+1) % ${#frames[@]} ))
         sleep 0.1
     done
-    printf "\033[K\n\033[K"
+    printf "\r\033[K\n\033[K\r\033[1A"
     printf "\033[?25h"
 }
 
@@ -79,8 +77,9 @@ else
 fi
 rm -f "$LOG"
 
-# Mark repo as safe for current user
+# Mark repo as safe for both root and current user
 sudo git config --global --add safe.directory "$REPO_ROOT"
+git config --global --add safe.directory "$REPO_ROOT"
 
 # Symlink /etc/nixos to repo root
 LOG=$(mktemp)
