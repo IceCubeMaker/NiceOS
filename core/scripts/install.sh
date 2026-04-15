@@ -21,27 +21,29 @@ spinner() {
     local logfile=$3
     local frames=("⠋" "⠙" "⠹" "⠸" "⠼" "⠴" "⠦" "⠧" "⠇" "⠏")
     local i=0
-    tput civis 2>/dev/null  # hide cursor
+    tput civis 2>/dev/null
     while kill -0 "$pid" 2>/dev/null; do
         local last=""
         if [ -n "$logfile" ] && [ -f "$logfile" ]; then
             last=$(tail -1 "$logfile" 2>/dev/null | sed 's/[^[:print:]]//g' | cut -c1-80)
         fi
-        tput sc                                                    # save cursor
+        tput sc
         printf "${CYAN}${frames[$i]}${RESET} ${msg}"
-        tput el                                                    # clear to end of line
-        tput nl                                                    # newline
+        tput el
+        printf "\n"
         printf "${DIM}  ${last}${RESET}"
-        tput el                                                    # clear to end of line
-        tput rc                                                    # restore cursor
+        tput el
+        tput rc
         i=$(( (i+1) % ${#frames[@]} ))
         sleep 0.1
     done
+    tput sc
+    printf "\r"
     tput el
-    tput nl
+    printf "\n"
     tput el
-    tput rc 2>/dev/null
-    tput cnorm 2>/dev/null  # show cursor
+    tput rc
+    tput cnorm 2>/dev/null
 }
 echo -e "${BOLD}${CYAN}"
 cat << 'EOF'
