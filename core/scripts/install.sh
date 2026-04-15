@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 set -e
 
-REPO_URL="https://github.com/yourusername/niceos"
+REPO_URL="https://github.com/IceCubeMaker/NiceOS"
 REPO_ROOT="/opt/niceos"
 USER_CONFIG_DIR="/etc/nice-configs"
 USER_CONFIG="$USER_CONFIG_DIR/configuration.nix"
+USER_PASSWORDS="$USER_CONFIG_DIR/passwords.nix"
 
 BOLD="\033[1m"
 CYAN="\033[36m"
@@ -14,16 +15,7 @@ RED="\033[31m"
 DIM="\033[2m"
 RESET="\033[0m"
 
-# ── Tips (customize these) ────────────────────────────────────────────────────
-TIPS=(
-    "💡 Run 'rebuild' anytime to apply config changes"
-    "💡 Edit /etc/nice-configs/configuration.nix to customize your system"
-    "💡 Run 'niceos-install' again anytime to re-run the installer"
-    "💡 Your flake.lock pins nixpkgs to an exact revision"
-    "💡 Run 'update' to pull the latest nixpkgs"
-    "💡 Run 'rebuild --turbo' to use all CPU cores for building"
-)
-# ─────────────────────────────────────────────────────────────────────────────
+source /run/current-system/sw/share/niceos/tips.sh
 
 random_tip() {
     echo "${TIPS[$RANDOM % ${#TIPS[@]}]}"
@@ -65,7 +57,7 @@ if ! command -v git &>/dev/null; then
     exit 1
 fi
 
-# Clone or update repo
+# Clone or update NiceOS repo
 if [ -d "$REPO_ROOT/.git" ]; then
     echo -e "${YELLOW}⚠${RESET}  NiceOS already installed, updating..."
     (sudo git -C "$REPO_ROOT" pull) &
@@ -89,12 +81,39 @@ echo -e "${GREEN}✓${RESET} hardware-configuration.nix generated"
 
 # Set up user config dir
 sudo mkdir -p "$USER_CONFIG_DIR"
+
+# configuration.nix
 if [ -f "$USER_CONFIG" ]; then
-    echo -e "${YELLOW}⚠${RESET}  $USER_CONFIG already exists, skipping template..."
+    echo -e "${YELLOW}⚠${RESET}  configuration.nix already exists, skipping template..."
 else
     (sudo cp "$REPO_ROOT/core/templates/user-configuration-template.nix" "$USER_CONFIG") &
     spinner $! "Copying user configuration template..."
     echo -e "${GREEN}✓${RESET} configuration.nix created at $USER_CONFIG"
+fi
+
+# passwords.nix
+if [ -f "$USER_PASSWORDS" ]; then
+    echo -e "${YELLOW}⚠${RESET}  passwords.nix already exists, skipping template..."
+else
+    (sudo cp "$REPO_ROOT/core/templates/passwords-template.nix" "$USER_PASSWORDS") &
+    spinner $! "Copying passwords template..."
+    echo -e "${GREEN}✓${RESET} passwords.nix created at $USER_PASSWORDS"
+fi
+
+# Lock down permissions on passwords.nix
+(sudo chmod 600 "$USER_PASSWORDS" && sudo chown root:root "$USER_PASSWORDS") &
+spinner $! "Securing passwords.nix..."
+echo -e "${GREEN}✓${RESET} passwords.nix permissions secured"
+
+# Initialize git repo in user config dir
+if [ -d "$USER_CONFIG_DIR/.git" ]; then
+    echo -e "${YELLOW}⚠${RESET}  User config git repo already initialized"
+else
+    (sudo git -C "$USER_CONFIG_DIR" init && \
+     sudo git -C "$USER_CONFIG_DIR" add configuration.nix && \
+     sudo git -C "$USER_CONFIG_DIR" commit -m "initial NiceOS user config") &
+    spinner $! "Initializing user config git repo..."
+    echo -e "${GREEN}✓${RESET} Git repo initialized at $USER_CONFIG_DIR"
 fi
 
 # Enable flakes
@@ -122,6 +141,6 @@ nix --experimental-features 'nix-command flakes' run nixpkgs#nh -- os switch "$R
 echo ""
 echo -e "${BOLD}${GREEN}✓ NiceOS installed successfully!${RESET}"
 echo -e "${DIM}  Your config is at /etc/nice-configs/configuration.nix${RESET}"
-echo -e "${DIM}  Edit it with: sudo nano /etc/nice-configs/configuration.nix${RESET}"
-echo -e "${DIM}  Then run 'rebuild' to apply changes.${RESET}"
+echo -e "${DIM}  Your passwords are at /etc/nice-configs/passwords.nix${RESET}"
+echo -e "${DIM}  Run 'rebuild' to apply future changes.${RESET}"
 echo ""
