@@ -15,9 +15,12 @@ RED="\033[31m"
 DIM="\033[2m"
 RESET="\033[0m"
 
-source /run/current-system/sw/share/niceos/tips.sh
-
 random_tip() {
+    if [ -f /run/current-system/sw/share/niceos/tips.sh ]; then
+        source /run/current-system/sw/share/niceos/tips.sh
+    else
+        source "$REPO_ROOT/core/scripts/tips.sh"
+    fi
     echo "${TIPS[$RANDOM % ${#TIPS[@]}]}"
 }
 
