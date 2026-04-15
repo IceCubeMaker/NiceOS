@@ -118,7 +118,7 @@ grep -qxF "hardware-configuration.nix" "$REPO_ROOT/.gitignore" 2>/dev/null || \
 
 echo ""
 echo -e "${CYAN}🚀 Rebuilding system...${RESET}"
-sudo nix --extra-experimental-features 'nix-command flakes' \
+sudo NIX_BUILD_CORES=2 nix --extra-experimental-features 'nix-command flakes' \
     run nixpkgs#nh -- os switch "$REPO_ROOT" -- --impure
 
 echo ""

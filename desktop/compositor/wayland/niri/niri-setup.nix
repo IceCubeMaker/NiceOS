@@ -13,7 +13,7 @@
 #   ndrop, taskcli-sidebar-launch, waybar-wrapper
 #   niri-session-manager
 #   xwayland-satellite, XDG portals
-#   niri KDL config + stasis idle config
+#   niri KDL config
 #   waybar JSON config + kitty config
 #   ASUS asusd + wp-rgb-boot service
 #   Disable GNOME/GDM
@@ -109,8 +109,6 @@ let
       mainProgram = "niri-session-manager";
     };
   };
-
-  stasis = pkgs.stasis;
 
   # ── niri-single-max ────────────────────────────────────────────────────────
   niri-single-max = pkgs.writeShellScriptBin "niri-single-max" ''
@@ -411,18 +409,6 @@ in
 
     services.dbus.enable = true;
 
-    systemd.user.services.stasis = {
-      description = "Stasis — media-aware Wayland idle manager";
-      wantedBy    = [ "graphical-session.target" ];
-      partOf      = [ "graphical-session.target" ];
-      after       = [ "graphical-session.target" ];
-      serviceConfig = {
-        ExecStart  = "${stasis}/bin/stasis --config /etc/stasis/stasis.rune";
-        Restart    = "on-failure";
-        RestartSec = 2;
-      };
-    };
-
     # ── niri-steam-notif ──────────────────────────────────────────────────────
     systemd.user.services.niri-steam-notif = {
       description = "Auto-close Steam friend notification popups";
@@ -550,7 +536,6 @@ EOF
       waybar
       xwayland-satellite
       xdg-desktop-portal-gnome
-      stasis
       fastfetch
       networkmanagerapplet
       pavucontrol
