@@ -88,12 +88,18 @@ spinner $! "Linking /etc/nixos to NiceOS..." "$LOG"
 rm -f "$LOG"
 echo -e "${GREEN}✓${RESET} /etc/nixos linked to $REPO_ROOT"
 
-# Generate hardware-configuration.nix
-LOG=$(mktemp)
-(sudo nixos-generate-config --show-hardware-config | sudo tee "$REPO_ROOT/hardware-configuration.nix" > /dev/null 2>"$LOG") &
-spinner $! "Generating hardware configuration..." "$LOG"
-rm -f "$LOG"
-echo -e "${GREEN}✓${RESET} hardware-configuration.nix generated"
+# Ensure hardware-configuration.nix exists
+HW_FILE="/etc/nixos/hardware-configuration.nix"
+
+if [ -f "$HW_FILE" ]; then
+    echo -e "${YELLOW}⚠${RESET}  hardware-configuration.nix already exists, keeping it"
+else
+    LOG=$(mktemp)
+    (sudo nixos-generate-config --show-hardware-config > "$HW_FILE" 2>"$LOG") &
+    spinner $! "Generating hardware configuration..." "$LOG"
+    rm -f "$LOG"
+    echo -e "${GREEN}✓${RESET} hardware-configuration.nix created"
+fi
 
 # Set up user config dir
 sudo mkdir -p "$USER_CONFIG_DIR"

@@ -17,7 +17,7 @@ REBUILD_NAME="${REBUILD_NAME:-rebuild}"
 sudo git -C /etc/nice-configs add -A
 sudo git -C /etc/nice-configs commit -m "$REBUILD_NAME" --allow-empty
 
-OUTPUT=$(nh os switch /opt/nice-configs -- --impure -j $NIX_JOBS 2>&1)
+OUTPUT=$(nh os switch /opt/niceos -- --impure -j $NIX_JOBS 2>&1)
 echo "$OUTPUT" | grep -iv "was moved to top-level\|has been renamed"
 
 echo "$OUTPUT" | grep -i "was moved to top-level\|has been renamed" | while read -r line; do
