@@ -33,7 +33,7 @@ spinner() {
         printf "\n"
         printf "${DIM}  ${last}${RESET}"
         tput el
-        tput rc
+        tput rcø
         i=$(( (i+1) % ${#frames[@]} ))
         sleep 0.1
     done
