@@ -22,29 +22,14 @@ if [ ! -f /etc/NIXOS ]; then
     exit 1
 fi
 
-random_tip() {
-    if [ -f /run/current-system/sw/share/niceos/tips.sh ]; then
-        source /run/current-system/sw/share/niceos/tips.sh
-    else
-        source "$REPO_ROOT/core/scripts/tips.sh"
-    fi
-    echo "${TIPS[$RANDOM % ${#TIPS[@]}]}"
-}
-
 spinner() {
     local pid=$1
     local msg=$2
     local frames=("⠋" "⠙" "⠹" "⠸" "⠼" "⠴" "⠦" "⠧" "⠇" "⠏")
     local i=0
-    local tip_timer=0
-    local current_tip="$(random_tip)"
     while kill -0 "$pid" 2>/dev/null; do
-        if (( tip_timer % 20 == 0 )); then
-            current_tip="$(random_tip)"
-        fi
-        printf "\r${CYAN}${frames[$i]}${RESET} ${msg}  ${DIM}${current_tip}${RESET}\033[K"
+        printf "\r${CYAN}${frames[$i]}${RESET} ${msg}\033[K"
         i=$(( (i+1) % ${#frames[@]} ))
-        tip_timer=$(( tip_timer + 1 ))
         sleep 0.1
     done
     printf "\r\033[K"
