@@ -7,9 +7,9 @@
 
 ---
 
-NiceOS is a pre-configured NixOS framework that aims to make NixOS as easy and friendly to use as possible — batteries included, sensible defaults, and a one-command install.
+NiceOS is a pre-configured NixOS framework that aims to make NixOS as easy and friendly to use as possible.
 
-The goal is that anyone comfortable with Linux can install NiceOS and get a beautiful, functional desktop without having to understand the Nix language.
+The goal is that anyone comfortable with Linux can install NiceOS and get a customizeable, functional desktop without having to understand the Nix language, while still enjoying the benefits of NixOS.
 
 ## Requirements
 
