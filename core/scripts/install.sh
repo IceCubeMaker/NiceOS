@@ -15,6 +15,8 @@ RED="\033[31m"
 DIM="\033[2m"
 RESET="\033[0m"
 
+read -rp "👤 Enter your username: " TARGET_USER
+
 spinner() {
     local pid=$1
     local msg=$2
