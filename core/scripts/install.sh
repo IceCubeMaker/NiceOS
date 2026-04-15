@@ -10,12 +10,9 @@ USER_PASSWORDS="$USER_CONFIG_DIR/passwords.nix"
 BOLD="\033[1m"
 CYAN="\033[36m"
 GREEN="\033[32m"
-YELLOW="\033[33m"
 RED="\033[31m"
 DIM="\033[2m"
 RESET="\033[0m"
-
-read -rp "👤 Enter your username: " TARGET_USER
 
 spinner() {
   local pid=$1
@@ -47,14 +44,15 @@ echo -e "${RESET}"
 echo -e "${DIM}  The friendly NixOS config framework${RESET}"
 echo ""
 
+read -rp "👤 Enter your username: " TARGET_USER
+
 # Checks
 [[ -f /etc/NIXOS ]] || { echo -e "${RED}Not NixOS${RESET}"; exit 1; }
-command -v git >/dev/null || { echo "git required"; exit 1; }
+command -v git >/dev/null || { echo -e "${RED}git required${RESET}"; exit 1; }
 sudo -v
 
-LOG=$(mktemp)
-
 # Clone / update repo
+LOG=$(mktemp)
 if [[ -d "$REPO_ROOT/.git" ]]; then
   (sudo git -C "$REPO_ROOT" pull > "$LOG" 2>&1) &
   spinner $! "Updating NiceOS..." "$LOG"
@@ -114,11 +112,19 @@ fi
 grep -qxF "hardware-configuration.nix" "$REPO_ROOT/.gitignore" 2>/dev/null || \
   echo "hardware-configuration.nix" | sudo tee -a "$REPO_ROOT/.gitignore" > /dev/null
 
+# Build
 echo ""
 echo -e "${CYAN}🚀 Rebuilding system...${RESET}"
-NIX_BUILD_CORES=2 nh os switch "$REPO_ROOT" -- --impure
+LOG=$(mktemp)
+(NIX_BUILD_CORES=2 sudo nixos-rebuild switch --flake "$REPO_ROOT#" --impure > "$LOG" 2>&1) &
+BUILD_PID=$!
+spinner $BUILD_PID "Building NiceOS..." "$LOG"
+wait $BUILD_PID
+BUILD_EXIT=$?
+rm -f "$LOG"
+[[ $BUILD_EXIT -eq 0 ]] || { echo -e "${RED}✗ Build failed — check output above${RESET}"; exit 1; }
 
 echo ""
 echo -e "${GREEN}✓ Done${RESET}"
-echo "Config: $USER_CONFIG"
+echo "Config:    $USER_CONFIG"
 echo "Passwords: $USER_PASSWORDS"
