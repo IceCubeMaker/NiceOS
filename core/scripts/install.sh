@@ -94,8 +94,8 @@ fi
 if [[ ! -f "$USER_PASSWORDS" ]]; then
   sudo cp "$REPO_ROOT/core/templates/passwords-template.nix" "$USER_PASSWORDS"
 fi
-sudo chown root:nixbld "$USER_PASSWORDS"
-sudo chmod 640 "$USER_PASSWORDS"
+sudo chown root:root "$USER_PASSWORDS"
+sudo chmod 644 "$USER_PASSWORDS"
 
 # Git init for user config dir
 if [[ ! -d "$USER_CONFIG_DIR/.git" ]]; then
