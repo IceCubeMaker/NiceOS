@@ -9,7 +9,7 @@
         /etc/nice-configs/configuration.nix
         /etc/nice-configs/passwords.nix
 
-        /opt/niceos/hardware-configuration.nix # this must be last
+        /etc/nixos/hardware-configuration.nix # this must be last
       ];
     };
   };

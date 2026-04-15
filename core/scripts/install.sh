@@ -68,7 +68,7 @@ LOG=$(mktemp)
 if [ -d "$REPO_ROOT/.git" ]; then
     echo -e "${YELLOW}⚠${RESET}  NiceOS already installed, updating..."
     (sudo git -C "$REPO_ROOT" pull > "$LOG" 2>&1) &
-    spinner $! "Updating NiceOS..." "$LOG"
+    spinner $! "Updating NiceOS..." "$LOG"mo
     echo -e "${GREEN}✓${RESET} NiceOS updated"
 else
     (sudo git clone "$REPO_URL" "$REPO_ROOT" > "$LOG" 2>&1) &
@@ -110,6 +110,9 @@ else
 fi
 
 # passwords.nix
+sudo chown franz: /etc/nice-configs/passwords.nix
+sudo chmod 600 /etc/nice-configs/passwords.nix
+
 if [ -f "$USER_PASSWORDS" ]; then
     echo -e "${YELLOW}⚠${RESET}  passwords.nix already exists, skipping template..."
 else
