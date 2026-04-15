@@ -21,9 +21,9 @@ OUTPUT=$(nh os switch /opt/niceos -- --impure -j $NIX_JOBS 2>&1)
 echo "$OUTPUT" | grep -iv "was moved to top-level\|has been renamed"
 
 echo "$OUTPUT" | grep -i "was moved to top-level\|has been renamed" | while read -r line; do
-    old=$(echo "$line" | grep -oP "(?<=')\S+(?=' was moved|\S+(?=' has been renamed))")
+    old=$(echo "$line" | grep -oP "(?<=')\S+(?=' was moved to top-level| has been renamed)")
     new=$(echo "$line" | grep -oP "(?<=pkgs\.)\w+(?=' directly)|(?<=renamed to ')\w+")
-    [ -z "$old" ] || [ -z "$new" ] && continue
+    [[ -z "$old" || -z "$new" ]] && continue
     echo "🔄 Renaming $old → pkgs.$new"
     find "/opt/niceos" -type f -name "*.nix" | while read -r file; do
         sudo sed -i "s/\b$old\b/$new/g" "$file"
