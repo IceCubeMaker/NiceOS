@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -e
+set -euo pipefail
 
 REPO_URL="https://github.com/IceCubeMaker/NiceOS"
 REPO_ROOT="/opt/niceos"
@@ -21,20 +21,20 @@ spinner() {
     local pid=$1
     local msg=$2
     local logfile=$3
+
     local frames=("⠋" "⠙" "⠹" "⠸" "⠼" "⠴" "⠦" "⠧" "⠇" "⠏")
     local i=0
+
     printf "\033[?25l"
     while kill -0 "$pid" 2>/dev/null; do
         local last=""
-        if [ -n "$logfile" ] && [ -f "$logfile" ]; then
-            last=$(tail -1 "$logfile" 2>/dev/null | sed 's/[^[:print:]]//g' | cut -c1-80)
+        if [[ -f "$logfile" ]]; then
+            last=$(tail -n 1 "$logfile" | sed 's/[^[:print:]]//g' | cut -c1-80)
         fi
-        printf "\r${CYAN}${frames[$i]}${RESET} ${msg}\033[K"
-        printf "\n${DIM}  %-80s${RESET}\r\033[1A" "$last"
+        printf "\r${CYAN}${frames[$i]}${RESET} %s\033[K\n${DIM}  %-80s${RESET}\033[1A" "$msg" "$last"
         i=$(( (i+1) % ${#frames[@]} ))
         sleep 0.1
     done
-    printf "\r\033[K\n\033[K\r\033[1A"
     printf "\033[?25h"
 }
 
@@ -49,131 +49,79 @@ echo -e "${RESET}"
 echo -e "${DIM}  The friendly NixOS config framework${RESET}"
 echo ""
 
-# Check for NixOS
-if [ ! -f /etc/NIXOS ]; then
-    echo -e "${RED}✗${RESET} NiceOS requires NixOS."
-    echo -e "${DIM}  Visit https://nixos.org to get started.${RESET}"
-    exit 1
-fi
+# Checks
+[[ -f /etc/NIXOS ]] || { echo -e "${RED}Not NixOS${RESET}"; exit 1; }
+command -v git >/dev/null || { echo "git required"; exit 1; }
 
-# Check for git
-if ! command -v git &>/dev/null; then
-    echo -e "${RED}✗${RESET} git is required but not installed"
-    exit 1
-fi
-
-# Ask for sudo upfront
 sudo -v
 
-# Clone or update NiceOS repo
 LOG=$(mktemp)
-if [ -d "$REPO_ROOT/.git" ]; then
-    echo -e "${YELLOW}⚠${RESET}  NiceOS already installed, updating..."
+
+# Clone / update repo
+if [[ -d "$REPO_ROOT/.git" ]]; then
     (sudo git -C "$REPO_ROOT" pull > "$LOG" 2>&1) &
-    spinner $! "Updating NiceOS..." "$LOG"mo
-    echo -e "${GREEN}✓${RESET} NiceOS updated"
+    spinner $! "Updating NiceOS..." "$LOG"
 else
     (sudo git clone "$REPO_URL" "$REPO_ROOT" > "$LOG" 2>&1) &
     spinner $! "Cloning NiceOS..." "$LOG"
-    echo -e "${GREEN}✓${RESET} NiceOS cloned to $REPO_ROOT"
 fi
-rm -f "$LOG"
 
-# Mark repo as safe for both root and current user
+rm -f "$LOG"
+echo -e "${GREEN}✓ Repo ready${RESET}"
+
+# Safe directory (only once)
 sudo git config --global --add safe.directory "$REPO_ROOT"
-git config --global --add safe.directory "$REPO_ROOT"
 
-# Symlink /etc/nixos to repo root
-LOG=$(mktemp)
-(sudo ln -sfn "$REPO_ROOT" /etc/nixos > "$LOG" 2>&1) &
-spinner $! "Linking /etc/nixos to NiceOS..." "$LOG"
-rm -f "$LOG"
-echo -e "${GREEN}✓${RESET} /etc/nixos linked to $REPO_ROOT"
+# Link nixos
+sudo ln -sfn "$REPO_ROOT" /etc/nixos
 
-# Ensure hardware-configuration.nix exists
+# Hardware config (correct method)
 HW_FILE="/etc/nixos/hardware-configuration.nix"
-
-if [ -f "$HW_FILE" ]; then
-    echo -e "${YELLOW}⚠${RESET}  hardware-configuration.nix already exists, keeping it"
-else
-    LOG=$(mktemp)
-    (sudo nixos-generate-config --show-hardware-config > "$HW_FILE" 2>"$LOG") &
-    spinner $! "Generating hardware configuration..." "$LOG"
-    rm -f "$LOG"
-    echo -e "${GREEN}✓${RESET} hardware-configuration.nix created"
+if [[ ! -f "$HW_FILE" ]]; then
+    sudo nixos-generate-config --root /mnt
+    sudo cp /mnt/etc/nixos/hardware-configuration.nix "$HW_FILE"
 fi
 
-# Set up user config dir
+# Config dir
 sudo mkdir -p "$USER_CONFIG_DIR"
 
-# configuration.nix
-if [ -f "$USER_CONFIG" ]; then
-    echo -e "${YELLOW}⚠${RESET}  configuration.nix already exists, skipping template..."
-else
-    LOG=$(mktemp)
-    (sudo cp "$REPO_ROOT/core/templates/user-configuration-template.nix" "$USER_CONFIG" > "$LOG" 2>&1) &
-    spinner $! "Copying user configuration template..." "$LOG"
-    rm -f "$LOG"
-    echo -e "${GREEN}✓${RESET} configuration.nix created at $USER_CONFIG"
+# User config
+if [[ ! -f "$USER_CONFIG" ]]; then
+    sudo cp "$REPO_ROOT/core/templates/user-configuration-template.nix" "$USER_CONFIG"
+    sudo sed -i "s/__USERNAME__/$TARGET_USER/g" "$USER_CONFIG" || true
 fi
 
-# passwords.nix
-sudo chown franz: /etc/nice-configs/passwords.nix
-sudo chmod 600 /etc/nice-configs/passwords.nix
-
-if [ -f "$USER_PASSWORDS" ]; then
-    echo -e "${YELLOW}⚠${RESET}  passwords.nix already exists, skipping template..."
-else
-    LOG=$(mktemp)
-    (sudo cp "$REPO_ROOT/core/templates/passwords-template.nix" "$USER_PASSWORDS" > "$LOG" 2>&1) &
-    spinner $! "Copying passwords template..." "$LOG"
-    rm -f "$LOG"
-    echo -e "${GREEN}✓${RESET} passwords.nix created at $USER_PASSWORDS"
+# Passwords
+if [[ ! -f "$USER_PASSWORDS" ]]; then
+    sudo cp "$REPO_ROOT/core/templates/passwords-template.nix" "$USER_PASSWORDS"
 fi
 
-# Lock down permissions on passwords.nix
-LOG=$(mktemp)
-(sudo chmod 640 "$USER_PASSWORDS" && sudo chown root:nixbld "$USER_PASSWORDS" > "$LOG" 2>&1) &
-spinner $! "Securing passwords.nix..." "$LOG"
-rm -f "$LOG"
-echo -e "${GREEN}✓${RESET} passwords.nix permissions secured"
+sudo chown root:nixbld "$USER_PASSWORDS"
+sudo chmod 640 "$USER_PASSWORDS"
 
-# Initialize git repo in user config dir
-if [ -d "$USER_CONFIG_DIR/.git" ]; then
-    echo -e "${YELLOW}⚠${RESET}  User config git repo already initialized"
-else
-    LOG=$(mktemp)
-    (sudo git -C "$USER_CONFIG_DIR" init && \
-     sudo git -C "$USER_CONFIG_DIR" add configuration.nix && \
-     sudo git -C "$USER_CONFIG_DIR" commit -m "initial NiceOS user config" > "$LOG" 2>&1) &
-    spinner $! "Initializing user config git repo..." "$LOG"
-    rm -f "$LOG"
-    echo -e "${GREEN}✓${RESET} Git repo initialized at $USER_CONFIG_DIR"
+# Git init (safe)
+if [[ ! -d "$USER_CONFIG_DIR/.git" ]]; then
+    sudo git -C "$USER_CONFIG_DIR" init
+    sudo git -C "$USER_CONFIG_DIR" add configuration.nix || true
+    sudo git -C "$USER_CONFIG_DIR" commit -m "initial NiceOS config" || true
 fi
 
-# Enable flakes
-LOG=$(mktemp)
-(sudo bash -c 'mkdir -p /etc/nix && grep -q "experimental-features" /etc/nix/nix.conf 2>/dev/null || echo "experimental-features = nix-command flakes" >> /etc/nix/nix.conf' > "$LOG" 2>&1) &
-spinner $! "Enabling flakes..." "$LOG"
-rm -f "$LOG"
-echo -e "${GREEN}✓${RESET} Flakes enabled"
-
-# Add hardware-configuration.nix to .gitignore
-if ! grep -q "hardware-configuration.nix" "$REPO_ROOT/.gitignore" 2>/dev/null; then
-    sudo bash -c "echo 'hardware-configuration.nix' >> '$REPO_ROOT/.gitignore'"
-    echo -e "${GREEN}✓${RESET} Added hardware-configuration.nix to .gitignore"
-else
-    echo -e "${YELLOW}⚠${RESET}  .gitignore already up to date"
+# Enable flakes safely (no duplicates)
+sudo mkdir -p /etc/nix
+if ! grep -q "experimental-features" /etc/nix/nix.conf 2>/dev/null; then
+    echo "experimental-features = nix-command flakes" | sudo tee -a /etc/nix/nix.conf >/dev/null
 fi
 
-echo ""
-echo -e "${CYAN}🚀 Starting NiceOS rebuild...${RESET}"
-echo ""
-nix --extra-experimental-features 'nix-command flakes' run nixpkgs#nh -- os switch "$REPO_ROOT" -- --impure
+# gitignore
+grep -qxF "hardware-configuration.nix" "$REPO_ROOT/.gitignore" 2>/dev/null || \
+    echo "hardware-configuration.nix" | sudo tee -a "$REPO_ROOT/.gitignore" >/dev/null
 
 echo ""
-echo -e "${BOLD}${GREEN}✓ NiceOS installed successfully!${RESET}"
-echo -e "${DIM}  Your config is at /etc/nice-configs/configuration.nix${RESET}"
-echo -e "${DIM}  Your passwords are at /etc/nice-configs/passwords.nix${RESET}"
-echo -e "${DIM}  Run 'rebuild' to apply future changes.${RESET}"
+echo -e "${CYAN}🚀 Rebuilding system...${RESET}"
+sudo nix --extra-experimental-features 'nix-command flakes' \
+    run nixpkgs#nh -- os switch "$REPO_ROOT" -- --impure
+
 echo ""
+echo -e "${GREEN}✓ Done${RESET}"
+echo "Config: $USER_CONFIG"
+echo "Passwords: $USER_PASSWORDS"
